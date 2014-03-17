@@ -19,7 +19,7 @@ void main()
 	b.resize(m+1);
 	for (int j = 1; j <= m; ++j)
 		cin >> b[j];
-	p.resize(n+1);
+	p.resize(m+1);
 	d.resize(n+1, vector<int>(m+1));
 	
 	for (int i = 1; i <= n; ++i)
@@ -46,6 +46,11 @@ void main()
 	{
 		if (d[n][j] > d[n][ans_pos])
 			ans_pos = j;
+	}
+	if (!d[n][ans_pos])
+	{
+		cout << 0 << endl;
+		return;
 	}
 	vector <int> ans;
 	while (ans_pos)
