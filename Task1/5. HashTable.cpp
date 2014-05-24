@@ -4,6 +4,7 @@
 #include <set>
 #include <ctime>
 #include <climits>
+#include <Windows.h>
 using namespace std;
 
 class HashTable
@@ -87,56 +88,67 @@ public:
 	{
 		vector< vector<string> > *table;
 		int x, y;
-		bool Empty()
-		{
-			return !table->size();
-		}
+		const Iterator *begin, *end;
 
 	public:
 		string& operator*()
 		{
-			if (Empty())
-				throw logic_error("ERROR!\nIterator: Empty!");
-			return table->at(x)[y];
+			if (*this == *end)
+				throw logic_error("ERROR!\nIterator: Out of range!");
+			try
+			{
+				return table->at(x)[y];
+			}
+			catch (exception ex)
+			{
+				throw logic_error("ERROR!\nIterator: Out of range!");
+			}
 		}
 
 		Iterator operator++()
 		{
-			if (Empty())
-				throw logic_error("ERROR!\nIterator: Empty!");
-			if (x == table->size() - 1 && y == table->at(x).size())
-				throw logic_error("ERROR!\nIterator: Out of range!");
-			if (x < table->size() - 1 && y == table->at(x).size() - 1)
+			++y;
+			if (y == table->at(x).size())
 			{
-				++x;
 				y = 0;
+				do
+				{
+					++x;
+				} while (x < table->size() && !table->at(x).size());
 			}
-			else
-				++y;
+			if (x == table->size())
+				return *this = *end;
 			return *this;
 		}
 
 		Iterator operator--()
 		{
-			if (Empty())
-				throw logic_error("ERROR!\nIterator: Empty!");
-			if (!x && !y)
-				throw logic_error("ERROR!\nIterator: Out of range!");
-			if (!y)
+			--y;
+			if (y < 0)
 			{
-				--x;
-				y = table->at(x).size() - 1;
+				do
+				{
+					--x;
+				} while (x >= 0 && !table->at(x).size());
 			}
-			else
-				--y;
+			if (x < 0)
+				return *this = *end;
+			y = table->at(x).size();
 			return *this;
 		}
 
 		string& operator->()
 		{
-			if (Empty())
-				throw logic_error("ERROR!\nIterator: Empty!");
-			return table->at(x)[y];
+			if (*this == *end)
+				throw logic_error("ERROR!\nIterator: Out of range!");
+			try
+			{
+				return table->at(x)[y];
+			}
+			catch (exception ex)
+			{
+				throw logic_error("ERROR!\nIterator: Out of range!");
+			}
 		}
 
 		bool operator==(Iterator other)
@@ -149,33 +161,36 @@ public:
 			return (x != other.x || y != other.y);
 		}
 
-		Iterator(HashTable *h)
-			: table(&h->table)
-		{}
-
 		Iterator(HashTable *h, int X, int Y)
-			: Iterator(h)
+			: table(&h->table), x(X), y(Y)
 		{
-			x = X;
-			y = Y;
-			if (x < 0 || y < 0)
-				throw logic_error("ERROR!\nIterator: Out of range!");
-			if (x >= table->size())
-				throw logic_error("ERROR!\nIterator: Out of range!");
-			if (y > table->at(x).size())
-				throw logic_error("ERROR!\nIterator: Out of range!");
+			begin = &h->it_begin;
+			end = &h->it_end;
+		}
+
+		Iterator(HashTable *h)
+		{
+			*this = h->it_begin;
 		}
 	};
 
-	Iterator begin()
+	const Iterator begin()
 	{
-		return Iterator(this, 0, 0);
+		int x = 0;
+		while (x < table.size() && !table[x].size())
+			++x;
+		if (x == table.size())
+			return end();
+		return Iterator(this, x, 0);
 	}
 
-	Iterator end()
+	const Iterator end()
 	{
-		return Iterator(this, size - 1, table[size - 1].size());
+		return Iterator(this, INT_MAX, INT_MAX);
 	}
+
+	const Iterator it_begin = begin(),
+		it_end = end();
 
 	HashTable()
 		:size(0), elements(0)
@@ -186,8 +201,9 @@ void Test1()
 {
 	HashTable hash;
 	set<string> s;
-	srand(1);
-	for (int i = 0; i < 100; ++i)
+	srand(time(NULL));
+	int n = rand() % 100000 + 10;
+	for (int i = 0; i < n; ++i)
 	{
 		string str;
 		int size = rand() % 20 + 1;
@@ -202,11 +218,13 @@ void Test1()
 	for (int i = 0; i < s.size(); ++i)
 	{
 		string str = *it;
-		printf("%s: %s\n", str.c_str(), (s.count(str) ? "OK" : "ERROR"));
+		printf("%d: %s - %s\n", i + 1, str.c_str(), (s.count(str) ? "OK" : "ERROR"));
 		++it;
 	}
 	if (it != hash.end())
-		printf("Too big HashTable\n");
+		printf("\nToo big HashTable\n");
+	else
+		printf("\n...OK %d strings...\n", s.size());
 }
 
 int main()
