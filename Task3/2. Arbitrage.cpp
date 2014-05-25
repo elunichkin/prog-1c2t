@@ -17,10 +17,10 @@ class FordBellman
 	int n, m;
 	vector<edge> e;
 
-	void fordbellman(int u)
+	void fordbellman()
 	{
 		vector<int> d(n, 0), p(n, -1);
-		d[u] = 1;
+		d[0] = 1;
 		int x;
 		for (int i = 0; i < n; ++i)
 		{
@@ -33,7 +33,7 @@ class FordBellman
 				x = e[j].v;
 			}
 		}
-		cout << "FORD-BELLMAN: ";
+		cout << "FORD-BELLMAN:\n";
 		if (x == -1)
 		{
 			cout << "NO NEGATIVE CYCLE!\n";
@@ -48,9 +48,7 @@ class FordBellman
 			if (i == x && path.size() > 1)
 				break;
 		}
-		reverse(path.begin(), path.end());
-		cout << "NEGATIVE CYCLE FOUND!\n";
-		cout << "CYCLE:\n";
+		cout << "NEGATIVE CYCLE FOUND:\n";
 		for (int i = 0; i < path.size(); ++i)
 			cout << path[i] + 1 << ' ';
 		cout << endl;
@@ -59,7 +57,7 @@ class FordBellman
 public:
 	void getans()
 	{
-		fordbellman(0);
+		fordbellman();
 	}
 
 	FordBellman(vector<vector<double>> a)
@@ -78,43 +76,55 @@ class Floyd
 	vector< vector<double> > a;
 	vector< vector<int> > p;
 
-	void floyd(int u)
+	void floyd()
 	{
 		vector<int> cycle;
-		int start;
+		int start = -1;
 		bool has_cycle = false;
-		for (int t = 0; t < n && !has_cycle; ++t)
-		for (int i = 0; i < n && !has_cycle; ++i)
-		for (int j = 0; j < n && !has_cycle; ++j)
-		if (a[i][t] < DBL_MAX && a[t][j] < DBL_MAX && a[i][t] * a[t][j] < a[i][j] - DBL_EPSILON)
+		for (int t = 0; t < n && start < 0; ++t)
+		for (int i = 0; i < n && start < 0; ++i)
+		for (int j = 0; j < n && start < 0; ++j)
+		if (a[i][t] * a[t][j] < a[i][j])
 		{
-			a[i][j] = min(DBL_MAX, a[i][t] * a[t][j]);
+			a[i][j] = a[i][t] * a[t][j];
 			p[i][j] = t;
 			if (i == j && a[i][j] < 1)
 			{
-				has_cycle = true;
+				start = i;
 				break;
 			}
 		}
-		cout << "FLOYD: ";
-		if (a[u][u] < 1)
-			cout << "NEGATIVE CYCLE FOUND!\n";
+		cout << "FLOYD:\n";
+		if (start >= 0)
+		{
+			cout << "NEGATIVE CYCLE FOUND:\n";
+			findpath(start, start);
+			cout << start + 1 << endl;
+		}
 		else
 			cout << "NO NEGATIVE CYCLE!\n";
+	}
+
+	void findpath(int x, int y)
+	{
+		if (p[x][y] == -1 || (x == p[x][y] && y == p[x][y]))
+			cout << x + 1 << ' ';
+		else
+		{
+			findpath(x, p[x][y]);
+			findpath(p[x][y], y);
+		}
 	}
 
 public:
 	void getans()
 	{
-		floyd(0);
+		floyd();
 	}
 
 	Floyd(vector<vector<double>> A)
 		: a(A), n(A.size())
 	{
-		for (int i = 0; i < n; ++i)
-		for (int j = 0; j < n; ++j)
-			a[i][j] = -(1 / a[i][j]);
 		p.assign(n, vector<int>(n, -1));
 	}
 };
